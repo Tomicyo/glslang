@@ -1641,6 +1641,16 @@ void TShader::setSourceEntryPoint(const char* name)
     sourceEntryPointName = name;
 }
 
+size_t TShader::getNumDeclEntryPoints() const { return intermediate->getNumDeclaredEntryPoints(); }
+const char* TShader::getDeclEntryName(int i) const
+{
+  return intermediate->getDeclaredEntryNames()[i].c_str();
+}
+EShLanguage TShader::getDeclEntryStage(const char* name) const
+{
+  return intermediate->getDeclaredEntries(name);
+}
+
 // Set binding base for sampler types
 void TShader::setShiftSamplerBinding(unsigned int base) { intermediate->setShiftSamplerBinding(base); }
 // Set binding base for texture types (SRV)

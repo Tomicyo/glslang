@@ -63,6 +63,12 @@ namespace glslang {
         EatPatchSize,
         EatUnroll,
         EatLoop,
+        EatVertexShader,
+        EatPixelShader,
+        EatComputeShader,
+        EatGeometryShader,
+        EatDomainShader,
+        EatHullShader
     };
 }
 

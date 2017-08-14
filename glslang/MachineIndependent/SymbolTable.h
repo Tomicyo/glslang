@@ -217,12 +217,14 @@ class TFunction : public TSymbol {
 public:
     explicit TFunction(TOperator o) :
         TSymbol(0),
-        op(o),
+        op(o), 
+        entryType(EShLanguage::EShLangCount),
         defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), defaultParamCount(0) { }
     TFunction(const TString *name, const TType& retType, TOperator tOp = EOpNull) :
         TSymbol(name),
         mangledName(*name + '('),
         op(tOp),
+        entryType(EShLanguage::EShLangCount),
         defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), defaultParamCount(0)
     {
         returnType.shallowCopy(retType);
@@ -270,6 +272,8 @@ public:
 
     virtual const TString& getMangledName() const override { return mangledName; }
     virtual const TType& getType() const override { return returnType; }
+    virtual EShLanguage getShaderType() const { return entryType; }
+    virtual void setShaderType(EShLanguage type) { entryType = type; }
     virtual TBuiltInVariable getDeclaredBuiltInType() const { return declaredBuiltIn; }
     virtual TType& getWritableType() override { return returnType; }
     virtual void relateToOperator(TOperator o) { assert(writable); op = o; }
@@ -306,6 +310,8 @@ protected:
 
     TString mangledName;
     TOperator op;
+    /* indicate shader type, default is EShLanguage::EShLangCount */
+    EShLanguage entryType;
     bool defined;
     bool prototyped;
     bool implicitThis;         // True if this function is allowed to see all members of 'this'

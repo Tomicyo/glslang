@@ -1,0 +1,5 @@
+add_executable(LibC ${CMAKE_CURRENT_SOURCE_DIR}/LibCompiler.cpp)
+set_property(TARGET LibC PROPERTY FOLDER tools)
+set_property(TARGET LibC PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(LibC glslang-default-resource-limits glslang)
+glslang_set_link_args(LibC)

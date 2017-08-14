@@ -1894,6 +1894,9 @@ TIntermNode* HlslParseContext::transformEntryPoint(const TSourceLoc& loc, TFunct
             });
     };
 
+    if (userFunction.getShaderType() != EShLangCount) {
+      intermediate.addDeclaredEntryPoint(userFunction.getName(), userFunction.getShaderType());
+    }
     // if we aren't in the entry point, fix the IO as such and exit
     if (userFunction.getName().compare(intermediate.getEntryPointName().c_str()) != 0) {
         remapNonEntryPointIO(userFunction);

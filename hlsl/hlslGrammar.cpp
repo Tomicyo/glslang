@@ -398,6 +398,20 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
 
             // function_parameters
             declarator.function = new TFunction(fullName, declaredType);
+            if(declarator.attributes.contains(EatComputeShader)) {
+              declarator.function->setShaderType(EShLangCompute);
+            } else if (declarator.attributes.contains(EatVertexShader)) {
+              declarator.function->setShaderType(EShLangVertex);
+            } else if (declarator.attributes.contains(EatPixelShader)) {
+              declarator.function->setShaderType(EShLangFragment);
+            } else if (declarator.attributes.contains(EatGeometryShader)) {
+              declarator.function->setShaderType(EShLangGeometry);
+            } else if (declarator.attributes.contains(EatHullShader)) {
+              declarator.function->setShaderType(EShLangTessEvaluation);
+            } else if (declarator.attributes.contains(EatDomainShader)) {
+              declarator.function->setShaderType(EShLangTessControl);
+            }
+
             if (!acceptFunctionParameters(*declarator.function)) {
                 expected("function parameter list");
                 return false;

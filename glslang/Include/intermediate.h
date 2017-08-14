@@ -1264,8 +1264,8 @@ typedef TVector<int> TQualifierList;
 //
 class TIntermAggregate : public TIntermOperator {
 public:
-    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(0) { }
-    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(0) { }
+    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(0), shaderType(EShLangCount) { }
+    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(0), shaderType(EShLangCount) { }
     ~TIntermAggregate() { delete pragmaTable; }
     virtual       TIntermAggregate* getAsAggregate()       { return this; }
     virtual const TIntermAggregate* getAsAggregate() const { return this; }
@@ -1285,12 +1285,15 @@ public:
     bool getDebug() const { return debug; }
     void addToPragmaTable(const TPragmaTable& pTable);
     const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
+    EShLanguage getShaderType() const { return shaderType; }
+    void setShaderType(EShLanguage shader) { shaderType = shader; }
 protected:
     TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
     TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
     TIntermSequence sequence;
     TQualifierList qualifier;
     TString name;
+    EShLanguage shaderType;
     bool userDefined; // used for user defined function names
     bool optimize;
     bool debug;

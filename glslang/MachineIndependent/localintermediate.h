@@ -458,6 +458,16 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
+    using TEntryMap = std::unordered_map<TString, EShLanguage>;
+    using TEntrySet = std::vector<TString>;
+    size_t getNumDeclaredEntryPoints() const { return declaredEntries.size(); }
+    void addDeclaredEntryPoint(const TString& name, EShLanguage lang) {
+        declaredEntries[name] = lang;
+        declaredEntryNames.push_back(name);
+    }
+    EShLanguage getDeclaredEntries(const TString& name) const { return declaredEntries.at(name); }
+    const TEntrySet& getDeclaredEntryNames() const { return declaredEntryNames; }
+
     void setSourceFile(const char* file) { sourceFile = file; }
     const std::string& getSourceFile() const { return sourceFile; }
     void addSourceText(const char* text) { sourceText = sourceText + text; }
@@ -492,6 +502,9 @@ protected:
     EShSource source;            // source language, known a bit later
     std::string entryPointName;
     std::string entryPointMangledName;
+
+    TEntryMap declaredEntries;
+    TEntrySet declaredEntryNames;
 
     EProfile profile;
     int version;

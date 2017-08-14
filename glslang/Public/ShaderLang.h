@@ -346,6 +346,9 @@ public:
     void setPreamble(const char* s) { preamble = s; }
     void setEntryPoint(const char* entryPoint);
     void setSourceEntryPoint(const char* sourceEntryPointName);
+    size_t getNumDeclEntryPoints() const;
+    const char* getDeclEntryName(int i) const;
+    EShLanguage getDeclEntryStage(const char* name) const;
     void setShiftSamplerBinding(unsigned int base);
     void setShiftTextureBinding(unsigned int base);
     void setShiftImageBinding(unsigned int base);

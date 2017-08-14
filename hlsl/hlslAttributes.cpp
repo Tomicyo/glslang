@@ -82,6 +82,18 @@ namespace glslang {
             return EatUnroll;
         else if (lowername == "loop")
             return EatLoop;
+        else if (lowername == "vertexshader")
+            return EatVertexShader;
+        else if (lowername == "pixelshader")
+            return EatPixelShader;
+        else if (lowername == "computeshader")
+            return EatComputeShader;
+        else if (lowername == "geometryshader")
+            return EatGeometryShader;
+        else if (lowername == "domainshader")
+            return EatDomainShader;
+        else if (lowername == "hullshader")
+            return EatHullShader;
         else
             return EatNone;
     }
