@@ -98,6 +98,7 @@ enum TOptions {
     EOptionStdin                = (1 << 27),
     EOptionOptimizeDisable      = (1 << 28),
     EOptionOptimizeSize         = (1 << 29),
+    EOptionInvertY              = (1 << 30),
 };
 
 //
@@ -126,6 +127,9 @@ void InfoLogMsg(const char* msg, const char* name, const int num);
 // Globally track if any compile or link failure.
 bool CompileFailed = false;
 bool LinkFailed = false;
+
+// array of unique places to leave the shader names and infologs for the asynchronous compiles
+std::vector<std::unique_ptr<glslang::TWorkItem>> WorkItems;
 
 TBuiltInResource Resources;
 std::string ConfigFile;
@@ -261,14 +265,14 @@ bool SetConfigFile(const std::string& name)
 //
 void Error(const char* message)
 {
-    printf("%s: Error %s (use -h for usage)\n", ExecutableName, message);
+    fprintf(stderr, "%s: Error %s (use -h for usage)\n", ExecutableName, message);
     exit(EFailUsage);
 }
 
 //
 // Process an optional binding base of one the forms:
 //   --argname [stage] base            // base for stage (if given) or all stages (if not)
-//   --argname [stage] [set base]...   // set/base pairs: set the base for given binding set.
+//   --argname [stage] [base set]...   // set/base pairs: set the base for given binding set.
 
 // Where stage is one of the forms accepted by FindLanguage, and base is an integer
 //
@@ -293,8 +297,8 @@ void ProcessBindingBase(int& argc, char**& argv, glslang::TResourceType res)
     if ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
         // Parse a per-set binding base
         while ((argc - arg) > 2 && isdigit(argv[arg+0][0]) && isdigit(argv[arg+1][0])) {
-            const int setNum = atoi(argv[arg++]);
             const int baseNum = atoi(argv[arg++]);
+            const int setNum = atoi(argv[arg++]);
             perSetBase[setNum] = baseNum;
         }
     } else {
@@ -516,6 +520,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         variableName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "invert-y" ||  // synonyms
+                               lowerword == "iy") {
+                        Options |= EOptionInvertY;
                     } else {
                         usage();
                     }
@@ -821,7 +828,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             // TODO: use a range based for loop here, when available in all environments.
             for (auto i = baseBindingForSet[res][compUnit.stage].begin();
                  i != baseBindingForSet[res][compUnit.stage].end(); ++i)
-                shader->setShiftBindingForSet(res, i->first, i->second);
+                shader->setShiftBindingForSet(res, i->second, i->first);
         }
 
         shader->setFlattenUniformArrays((Options & EOptionFlattenUniformArrays) != 0);
@@ -836,6 +843,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (Options & EOptionAutoMapLocations)
             shader->setAutoMapLocations(true);
+
+        if (Options & EOptionInvertY)
+            shader->setInvertY(true);
 
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
@@ -1022,14 +1032,10 @@ void CompileAndLinkShaderFiles(glslang::TWorklist& Worklist)
         FreeFileData(const_cast<char*>(it->text[0]));
 }
 
-int C_DECL main(int argc, char* argv[])
+int singleMain()
 {
-    // array of unique places to leave the shader names and infologs for the asynchronous compiles
-    std::vector<std::unique_ptr<glslang::TWorkItem>> workItems;
-    ProcessArguments(workItems, argc, argv);
-
     glslang::TWorklist workList;
-    std::for_each(workItems.begin(), workItems.end(), [&workList](std::unique_ptr<glslang::TWorkItem>& item) {
+    std::for_each(WorkItems.begin(), WorkItems.end(), [&workList](std::unique_ptr<glslang::TWorkItem>& item) {
         assert(item);
         workList.add(item.get());
     });
@@ -1049,6 +1055,7 @@ int C_DECL main(int argc, char* argv[])
         printf("SPIR-V Version %s\n", spirvVersion.c_str());
         printf("GLSL.std.450 Version %d, Revision %d\n", GLSLstd450Version, GLSLstd450Revision);
         printf("Khronos Tool ID %d\n", glslang::GetKhronosToolId());
+        printf("SPIR-V Generator Version %d\n", glslang::GetSpirvGeneratorVersion());
         printf("GL_KHR_vulkan_glsl version %d\n", 100);
         printf("ARB_GL_gl_spirv version %d\n", 100);
         if (workList.empty())
@@ -1060,8 +1067,8 @@ int C_DECL main(int argc, char* argv[])
     }
 
     if (Options & EOptionStdin) {
-        workItems.push_back(std::unique_ptr<glslang::TWorkItem>{new glslang::TWorkItem("stdin")});
-        workList.add(workItems.back().get());
+        WorkItems.push_back(std::unique_ptr<glslang::TWorkItem>{new glslang::TWorkItem("stdin")});
+        workList.add(WorkItems.back().get());
     }
 
     ProcessConfigFile();
@@ -1074,22 +1081,25 @@ int C_DECL main(int argc, char* argv[])
     if (Options & EOptionLinkProgram ||
         Options & EOptionOutputPreprocessed) {
         glslang::InitializeProcess();
+        glslang::InitializeProcess();  // also test reference counting of users
+        glslang::InitializeProcess();  // also test reference counting of users
+        glslang::FinalizeProcess();    // also test reference counting of users
+        glslang::FinalizeProcess();    // also test reference counting of users
         CompileAndLinkShaderFiles(workList);
         glslang::FinalizeProcess();
     } else {
         ShInitialize();
+        ShInitialize();  // also test reference counting of users
+        ShFinalize();    // also test reference counting of users
 
         bool printShaderNames = workList.size() > 1;
 
-        if (Options & EOptionMultiThreaded)
-        {
+        if (Options & EOptionMultiThreaded) {
             std::array<std::thread, 16> threads;
-            for (unsigned int t = 0; t < threads.size(); ++t)
-            {
+            for (unsigned int t = 0; t < threads.size(); ++t) {
                 threads[t] = std::thread(CompileShaders, std::ref(workList));
-                if (threads[t].get_id() == std::thread::id())
-                {
-                    printf("Failed to create thread\n");
+                if (threads[t].get_id() == std::thread::id()) {
+                    fprintf(stderr, "Failed to create thread\n");
                     return EFailThreadCreate;
                 }
             }
@@ -1099,11 +1109,11 @@ int C_DECL main(int argc, char* argv[])
             CompileShaders(workList);
 
         // Print out all the resulting infologs
-        for (size_t w = 0; w < workItems.size(); ++w) {
-            if (workItems[w]) {
-                if (printShaderNames || workItems[w]->results.size() > 0)
-                    PutsIfNonEmpty(workItems[w]->name.c_str());
-                PutsIfNonEmpty(workItems[w]->results.c_str());
+        for (size_t w = 0; w < WorkItems.size(); ++w) {
+            if (WorkItems[w]) {
+                if (printShaderNames || WorkItems[w]->results.size() > 0)
+                    PutsIfNonEmpty(WorkItems[w]->name.c_str());
+                PutsIfNonEmpty(WorkItems[w]->results.c_str());
             }
         }
 
@@ -1116,6 +1126,25 @@ int C_DECL main(int argc, char* argv[])
         return EFailLink;
 
     return 0;
+}
+
+int C_DECL main(int argc, char* argv[])
+{
+    ProcessArguments(WorkItems, argc, argv);
+
+    int ret = 0;
+
+    // Loop over the entire init/finalize cycle to watch memory changes
+    const int iterations = 1;
+    if (iterations > 1)
+        glslang::OS_DumpMemoryCounters();
+    for (int i = 0; i < iterations; ++i) {
+        ret = singleMain();
+        if (iterations > 1)
+            glslang::OS_DumpMemoryCounters();
+    }
+
+    return ret;
 }
 
 //
@@ -1272,7 +1301,7 @@ void usage()
            "  -o <file>   save binary to <file>, requires a binary option (e.g., -V)\n"
            "  -q          dump reflection query database\n"
            "  -r          synonym for --relaxed-errors\n"
-           "  -s          silent mode\n"
+           "  -s          silence syntax and semantic error reporting\n"
            "  -t          multi-threaded mode\n"
            "  -v          print version strings\n"
            "  -w          synonym for --suppress-warnings\n"
@@ -1301,24 +1330,24 @@ void usage()
            "              Set descriptor set for all resources\n"
            "  --rsb [stage] type set binding       synonym for --resource-set-binding\n"
            "  --shift-image-binding [stage] num    base binding number for images (uav)\n"
-           "  --shift-image-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-image-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sib [stage] num                    synonym for --shift-image-binding\n"
            "  --shift-sampler-binding [stage] num  base binding number for samplers\n"
-           "  --shift-sampler-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-sampler-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --ssb [stage] num                    synonym for --shift-sampler-binding\n"
            "  --shift-ssbo-binding [stage] num     base binding number for SSBOs\n"
-           "  --shift-ssbo-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-ssbo-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sbb [stage] num                    synonym for --shift-ssbo-binding\n"
            "  --shift-texture-binding [stage] num  base binding number for textures\n"
-           "  --shift-texture-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-texture-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --stb [stage] num                    synonym for --shift-texture-binding\n"
            "  --shift-uav-binding [stage] num      base binding number for UAVs\n"
-           "  --shift-uav-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-uav-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --suavb [stage] num                  synonym for --shift-uav-binding\n"
            "  --shift-UBO-binding [stage] num      base binding number for UBOs\n"
-           "  --shift-UBO-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-UBO-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --shift-cbuffer-binding [stage] num  synonym for --shift-UBO-binding\n"
-           "  --shift-cbuffer-binding [stage] [set num]... per-descriptor-set shift values\n"
+           "  --shift-cbuffer-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --sub [stage] num                    synonym for --shift-UBO-binding\n"
            "  --source-entrypoint <name>           the given shader source function is\n"
            "                                       renamed to be the <name> given in -e\n"
@@ -1337,6 +1366,7 @@ void usage()
            "                                       uint32_t array named <name>\n"
            "                                       initialized with the shader binary code.\n"
            "  --vn <name>                          synonym for --variable-name <name>\n"
+           "  --invert-y | --iy                    invert position.Y output in vertex shader\n"
            );
 
     exit(EFailUsage);

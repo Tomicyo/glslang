@@ -93,6 +93,7 @@ public:
     TIntermTyped* handleAssignToMatrixSwizzle(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
     TIntermAggregate* assignClipCullDistance(const TSourceLoc&, TOperator, int semanticId, TIntermTyped* left, TIntermTyped* right);
+    TIntermTyped* assignPosition(const TSourceLoc&, TOperator, TIntermTyped* left, TIntermTyped* right);
     void decomposeIntrinsic(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeSampleMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeStructBufferMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
@@ -137,10 +138,12 @@ public:
 
     void setLayoutQualifier(const TSourceLoc&, TQualifier&, TString&);
     void setLayoutQualifier(const TSourceLoc&, TQualifier&, TString&, const TIntermTyped*);
+    void setSpecConstantId(const TSourceLoc&, TQualifier&, int value);
     void mergeObjectLayoutQualifiers(TQualifier& dest, const TQualifier& src, bool inheritOnly);
     void checkNoShaderLayouts(const TSourceLoc&, const TShaderQualifiers&);
 
     const TFunction* findFunction(const TSourceLoc& loc, TFunction& call, bool& builtIn, int& thisDepth, TIntermTyped*& args);
+    void addGenMulArgumentConversion(const TSourceLoc& loc, TFunction& call, TIntermTyped*& args);
     void declareTypedef(const TSourceLoc&, const TString& identifier, const TType&);
     void declareStruct(const TSourceLoc&, TString& structName, TType&);
     TSymbol* lookupUserType(const TString&, TType&);

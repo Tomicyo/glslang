@@ -224,6 +224,7 @@ public:
 #endif
         autoMapBindings(false),
         autoMapLocations(false),
+        invertY(false),
         flattenUniformArrays(false),
         useUnknownFormat(false),
         hlslOffsets(false),
@@ -271,7 +272,7 @@ public:
 
     unsigned int getShiftBinding(TResourceType res) const { return shiftBinding[res]; }
 
-    void setShiftBindingForSet(TResourceType res, unsigned int set, unsigned int shift)
+    void setShiftBindingForSet(TResourceType res, unsigned int shift, unsigned int set)
     {
         if (shift == 0) // ignore if there's no shift: it's a no-op.
             return;
@@ -281,8 +282,8 @@ public:
         const char* name = getResourceName(res);
         if (name != nullptr) {
             processes.addProcess(name);
-            processes.addArgument(set);
             processes.addArgument(shift);
+            processes.addArgument(set);
         }
     }
 
@@ -317,6 +318,14 @@ public:
             processes.addProcess("auto-map-locations");
     }
     bool getAutoMapLocations() const { return autoMapLocations; }
+    void setInvertY(bool invert)
+    {
+        invertY = invert;
+        if (invertY)
+            processes.addProcess("invert-y");
+    }
+    bool getInvertY() const { return invertY; }
+
     void setFlattenUniformArrays(bool flatten)
     {
         flattenUniformArrays = flatten;
@@ -574,6 +583,7 @@ public:
         xfbBuffers[buffer].stride = stride;
         return true;
     }
+    unsigned getXfbStride(int buffer) const { return xfbBuffers[buffer].stride; }
     int addXfbBufferOffset(const TType&);
     unsigned int computeTypeXfbSize(const TType&, bool& containsDouble) const;
     static int getBaseAlignmentScalar(const TType&, int& size);
@@ -695,6 +705,7 @@ protected:
     std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
     bool autoMapLocations;
+    bool invertY;
     bool flattenUniformArrays;
     bool useUnknownFormat;
     bool hlslOffsets;

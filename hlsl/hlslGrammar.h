@@ -71,8 +71,8 @@ namespace glslang {
         bool acceptControlDeclaration(TIntermNode*& node);
         bool acceptSamplerDeclarationDX9(TType&);
         bool acceptSamplerState();
-        bool acceptFullySpecifiedType(TType&);
-        bool acceptFullySpecifiedType(TType&, TIntermNode*& nodeList);
+        bool acceptFullySpecifiedType(TType&, const TAttributeMap&);
+        bool acceptFullySpecifiedType(TType&, TIntermNode*& nodeList, const TAttributeMap&, bool forbidDeclarators = false);
         bool acceptQualifier(TQualifier&);
         bool acceptLayoutQualifierList(TQualifier&);
         bool acceptType(TType&);
@@ -89,6 +89,7 @@ namespace glslang {
         bool acceptTextureType(TType&);
         bool acceptSubpassInputType(TType&);
         bool acceptStructBufferType(TType&);
+        bool acceptTextureBufferType(TType&);
         bool acceptConstantBufferType(TType&);
         bool acceptStruct(TType&, TIntermNode*& nodeList);
         bool acceptStructDeclarationList(TTypeList*&, TIntermNode*& nodeList, TVector<TFunctionDeclarator>&);

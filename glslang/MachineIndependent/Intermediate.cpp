@@ -2474,6 +2474,11 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
                 return false;
             node.setLeft(left);
             node.setRight(right);
+
+            // Update the original base assumption on result type..
+            node.setType(left->getType());
+            node.getWritableType().getQualifier().clear();
+
             break;
 
         default:
@@ -3170,10 +3175,10 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                             node->getLoc());
 }
 
-void TIntermAggregate::addToPragmaTable(const TPragmaTable& pTable)
+void TIntermAggregate::setPragmaTable(const TPragmaTable& pTable)
 {
-    assert(!pragmaTable);
-    pragmaTable = new TPragmaTable();
+    assert(pragmaTable == nullptr);
+    pragmaTable = new TPragmaTable;
     *pragmaTable = pTable;
 }
 

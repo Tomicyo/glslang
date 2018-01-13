@@ -722,7 +722,8 @@ enum TOperator {
     EOpInterlockedOr,       // ...
     EOpInterlockedXor,      // ...
     EOpAllMemoryBarrierWithGroupSync,    // memory barriers without non-hlsl AST equivalents
-    EOpGroupMemoryBarrierWithGroupSync,  // ...
+    EOpDeviceMemoryBarrier,              // ...
+    EOpDeviceMemoryBarrierWithGroupSync, // ...
     EOpWorkgroupMemoryBarrier,           // ...
     EOpWorkgroupMemoryBarrierWithGroupSync, // ...
     EOpEvaluateAttributeSnapped,         // InterpolateAtOffset with int position on 16x16 grid
@@ -875,6 +876,8 @@ public:
     virtual bool isVector() const { return type.isVector(); }
     virtual bool isScalar() const { return type.isScalar(); }
     virtual bool isStruct() const { return type.isStruct(); }
+    virtual bool isFloatingDomain() const { return type.isFloatingDomain(); }
+    virtual bool isIntegerDomain() const { return type.isIntegerDomain(); }
     TString getCompleteString() const { return type.getCompleteString(); }
 
 protected:
@@ -1320,7 +1323,7 @@ public:
     void setDebug(bool d) { debug = d; }
     bool getOptimize() const { return optimize; }
     bool getDebug() const { return debug; }
-    void addToPragmaTable(const TPragmaTable& pTable);
+    void setPragmaTable(const TPragmaTable& pTable);
     const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
     EShLanguage getShaderType() const { return shaderType; }
     void setShaderType(EShLanguage shader) { shaderType = shader; }
