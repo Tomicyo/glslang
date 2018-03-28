@@ -40,6 +40,8 @@
 #include "../Include/Common.h"
 #include "../Include/ConstantUnion.h"
 
+#include <unordered_set>
+
 namespace glslang {
 
     enum TAttributeType {
@@ -102,7 +104,23 @@ namespace glslang {
         const TConstUnion* getConstUnion(TBasicType basicType, int argNum) const;
     };
 
-    typedef TList<TAttributeArgs> TAttributes;
+    //typedef TList<TAttributeArgs> TAttributes;
+    class TAttributes : public TList<TAttributeArgs>
+    {
+    public:
+        void push_back(TAttributeArgs const& elem)
+        {
+            TList<TAttributeArgs>::push_back(elem);
+            name_set.insert(elem.name);
+        }
+
+        bool contains(TAttributeType const& tname) const
+        {
+            return name_set.find(tname) != name_set.end();
+        }
+
+        std::unordered_set<TAttributeType> name_set;
+    };
 
 } // end namespace glslang
 

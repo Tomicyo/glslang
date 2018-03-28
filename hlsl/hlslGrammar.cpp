@@ -404,7 +404,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
 
             // function_parameters
             declarator.function = new TFunction(fullName, declaredType);
-            /*if(declarator.attributes.contains(EatComputeShader)) {
+            if(declarator.attributes.contains(EatComputeShader)) {
               declarator.function->setShaderType(EShLangCompute);
             } else if (declarator.attributes.contains(EatVertexShader)) {
               declarator.function->setShaderType(EShLangVertex);
@@ -416,7 +416,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
               declarator.function->setShaderType(EShLangTessEvaluation);
             } else if (declarator.attributes.contains(EatDomainShader)) {
               declarator.function->setShaderType(EShLangTessControl);
-            }*/
+            }
 
             if (!acceptFunctionParameters(*declarator.function)) {
                 expected("function parameter list");
