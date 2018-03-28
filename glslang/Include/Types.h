@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -204,9 +205,18 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         }
 
         switch (type) {
-        case EbtFloat:               break;
-        case EbtInt:  s.append("i"); break;
-        case EbtUint: s.append("u"); break;
+        case EbtFloat:                   break;
+#ifdef AMD_EXTENSIONS
+        case EbtFloat16: s.append("f16"); break;
+#endif
+        case EbtInt8:   s.append("i8");  break;
+        case EbtUint16: s.append("u8");  break;
+        case EbtInt16:  s.append("i16"); break;
+        case EbtUint8:  s.append("u16"); break;
+        case EbtInt:    s.append("i");   break;
+        case EbtUint:   s.append("u");   break;
+        case EbtInt64:  s.append("i64"); break;
+        case EbtUint64: s.append("u64"); break;
         default:  break;  // some compilers want this
         }
         if (image) {
@@ -505,6 +515,12 @@ public:
         return flat || smooth || nopersp;
 #endif
     }
+#ifdef AMD_EXTENSIONS
+    bool isExplicitInterpolation() const
+    {
+        return explicitInterp;
+    }
+#endif
     bool isAuxiliary() const
     {
         return centroid || patch || sample;
@@ -1299,31 +1315,9 @@ public:
 
     void makeVector() { vector1 = true; }
 
-    // Merge type from parent, where a parentType is at the beginning of a declaration,
-    // establishing some characteristics for all subsequent names, while this type
-    // is on the individual names.
-    void mergeType(const TPublicType& parentType)
-    {
-        // arrayness is currently the only child aspect that has to be preserved
-        basicType = parentType.basicType;
-        vectorSize = parentType.vectorSize;
-        matrixCols = parentType.matrixCols;
-        matrixRows = parentType.matrixRows;
-        vector1 = false;                      // TPublicType is only GLSL which so far has no vec1
-        qualifier = parentType.qualifier;
-        sampler = parentType.sampler;
-        if (parentType.arraySizes)
-            newArraySizes(*parentType.arraySizes);
-        if (parentType.userDef) {
-            structure = parentType.userDef->getWritableStruct();
-            setTypeName(parentType.userDef->getTypeName());
-        }
-    }
-
     virtual void hideMember() { basicType = EbtVoid; vectorSize = 1; }
     virtual bool hiddenMember() const { return basicType == EbtVoid; }
 
-    virtual void setTypeName(const TString& n) { typeName = NewPoolTString(n.c_str()); }
     virtual void setFieldName(const TString& n) { fieldName = NewPoolTString(n.c_str()); }
     virtual const TString& getTypeName() const
     {
@@ -1353,7 +1347,7 @@ public:
     virtual bool isArrayOfArrays() const { return arraySizes != nullptr && arraySizes->getNumDims() > 1; }
     virtual int getImplicitArraySize() const { return arraySizes->getImplicitSize(); }
     virtual const TArraySizes* getArraySizes() const { return arraySizes; }
-    virtual       TArraySizes& getArraySizes()       { assert(arraySizes != nullptr); return *arraySizes; }
+    virtual       TArraySizes* getArraySizes()       { return arraySizes; }
 
     virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
@@ -1364,22 +1358,18 @@ public:
     virtual bool isImplicitlySizedArray() const { return isArray() && getOuterArraySize() == UnsizedArraySize && qualifier.storage != EvqBuffer; }
     virtual bool isRuntimeSizedArray()    const { return isArray() && getOuterArraySize() == UnsizedArraySize && qualifier.storage == EvqBuffer; }
     virtual bool isStruct() const { return structure != nullptr; }
-#ifdef AMD_EXTENSIONS
     virtual bool isFloatingDomain() const { return basicType == EbtFloat || basicType == EbtDouble || basicType == EbtFloat16; }
-#else
-    virtual bool isFloatingDomain() const { return basicType == EbtFloat || basicType == EbtDouble; }
-#endif
     virtual bool isIntegerDomain() const
     {
         switch (basicType) {
+        case EbtInt8:
+        case EbtUint8:
+        case EbtInt16:
+        case EbtUint16:
         case EbtInt:
         case EbtUint:
         case EbtInt64:
         case EbtUint64:
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
-#endif
         case EbtAtomicUint:
             return true;
         default:
@@ -1395,7 +1385,7 @@ public:
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
 
     // return true if this type contains any subtype which satisfies the given predicate.
-    template <typename P> 
+    template <typename P>
     bool contains(P predicate) const
     {
         if (predicate(this))
@@ -1448,17 +1438,15 @@ public:
             case EbtVoid:
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
+            case EbtInt8:
+            case EbtUint8:
+            case EbtInt16:
+            case EbtUint16:
             case EbtInt:
             case EbtUint:
             case EbtInt64:
             case EbtUint64:
-#ifdef AMD_EXTENSIONS
-            case EbtInt16:
-            case EbtUint16:
-#endif
             case EbtBool:
                 return true;
             default:
@@ -1493,22 +1481,33 @@ public:
         assert(type.arraySizes != nullptr);
         *arraySizes = *type.arraySizes;
     }
-    void newArraySizes(const TArraySizes& s)
+    void copyArraySizes(const TArraySizes& s)
     {
         // For setting a fresh new set of array sizes, not yet worrying about sharing.
         arraySizes = new TArraySizes;
         *arraySizes = s;
     }
+    void transferArraySizes(TArraySizes* s)
+    {
+        // For setting an already allocated set of sizes that this type can use
+        // (no copy made).
+        arraySizes = s;
+    }
     void clearArraySizes()
     {
-        arraySizes = 0;
+        arraySizes = nullptr;
     }
-    void addArrayOuterSizes(const TArraySizes& s)
+
+    // Add inner array sizes, to any existing sizes, via copy; the
+    // sizes passed in can still be reused for other purposes.
+    void copyArrayInnerSizes(const TArraySizes* s)
     {
-        if (arraySizes == nullptr)
-            newArraySizes(s);
-        else
-            arraySizes->addOuterSizes(s);
+        if (s != nullptr) {
+            if (arraySizes == nullptr)
+                copyArraySizes(*s);
+            else
+                arraySizes->addInnerSizes(*s);
+        }
     }
     void changeOuterArraySize(int s) { arraySizes->changeOuterSize(s); }
     void setImplicitArraySize(int s) { arraySizes->setImplicitSize(s); }
@@ -1535,17 +1534,15 @@ public:
         case EbtVoid:              return "void";
         case EbtFloat:             return "float";
         case EbtDouble:            return "double";
-#ifdef AMD_EXTENSIONS
         case EbtFloat16:           return "float16_t";
-#endif
+        case EbtInt8:              return "int8_t";
+        case EbtUint8:             return "uint8_t";
+        case EbtInt16:             return "int16_t";
+        case EbtUint16:            return "uint16_t";
         case EbtInt:               return "int";
         case EbtUint:              return "uint";
         case EbtInt64:             return "int64_t";
         case EbtUint64:            return "uint64_t";
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:             return "int16_t";
-        case EbtUint16:            return "uint16_t";
-#endif
         case EbtBool:              return "bool";
         case EbtAtomicUint:        return "atomic_uint";
         case EbtSampler:           return "sampler/image";
@@ -1689,13 +1686,17 @@ public:
         if (isArray()) {
             for(int i = 0; i < (int)arraySizes->getNumDims(); ++i) {
                 int size = arraySizes->getDimSize(i);
-                if (size == 0)
-                    appendStr(" implicitly-sized array of");
-                else {
+                if (size == UnsizedArraySize) {
+                    appendStr(" unsized");
+                    if (i == 0) {
+                        appendStr(" ");
+                        appendInt(arraySizes->getImplicitSize());
+                    }
+                } else {
                     appendStr(" ");
                     appendInt(arraySizes->getDimSize(i));
-                    appendStr("-element array of");
                 }
+                appendStr("-element array of");
             }
         }
         if (qualifier.precision != EpqNone) {
