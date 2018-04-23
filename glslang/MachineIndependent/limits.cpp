@@ -126,6 +126,7 @@ bool TInductiveTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* n
     return true;
 }
 
+#ifdef ENABLE_GLSL
 //
 // External function to call for loop check.
 //
@@ -141,7 +142,7 @@ void TParseContext::inductiveLoopBodyCheck(TIntermNode* body, int loopId, TSymbo
     if (it.bad)
         error(it.badLoc, "inductive loop index modified", "limitations", "");
 }
-
+#endif
 //
 // The "constant-index-expression" tranverser.
 //
@@ -182,6 +183,7 @@ bool TIndexTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node)
     return true;
 }
 
+#ifdef ENABLE_GLSL
 //
 // External function to call for loop check.
 //
@@ -194,5 +196,5 @@ void TParseContext::constantIndexExpressionCheck(TIntermNode* index)
     if (it.bad)
         error(it.badLoc, "Non-constant-index-expression", "limitations", "");
 }
-
+#endif
 } // end namespace glslang

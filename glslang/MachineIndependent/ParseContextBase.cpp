@@ -40,8 +40,9 @@
 
 #include "ParseHelper.h"
 
+#ifdef ENABLE_GLSL
 extern int yyparse(glslang::TParseContext*);
-
+#endif
 namespace glslang {
 
 //

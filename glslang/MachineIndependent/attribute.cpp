@@ -92,6 +92,7 @@ const TConstUnion* TAttributeArgs::getConstUnion(TBasicType basicType, int argNu
     return constVal;
 }
 
+#ifdef ENABLE_GLSL
 // Implementation of TParseContext parts of attributes
 TAttributeType TParseContext::attributeFromName(const TString& name) const
 {
@@ -252,6 +253,6 @@ void TParseContext::handleLoopAttributes(const TAttributes& attributes, TIntermN
         }
     }
 }
-
+#endif
 
 } // end namespace glslang
