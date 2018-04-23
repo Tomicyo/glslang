@@ -268,10 +268,13 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
 // Recursively merge the implicit array sizes through the objects' respective type trees.
 void TIntermediate::mergeImplicitArraySizes(TType& type, const TType& unitType)
 {
-    if (type.isImplicitlySizedArray() && unitType.isArray()) {
-        int newImplicitArraySize = unitType.isImplicitlySizedArray() ? unitType.getImplicitArraySize() : unitType.getOuterArraySize();
-        if (newImplicitArraySize > type.getImplicitArraySize ())
-            type.setImplicitArraySize(newImplicitArraySize);
+    if (type.isUnsizedArray()) {
+        if (unitType.isUnsizedArray()) {
+            type.updateImplicitArraySize(unitType.getImplicitArraySize());
+            if (unitType.isArrayVariablyIndexed())
+                type.setArrayVariablyIndexed();
+        } else if (unitType.isSizedArray())
+            type.changeOuterArraySize(unitType.getOuterArraySize());
     }
 
     // Type mismatches are caught and reported after this, just be careful for now.
@@ -294,8 +297,13 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
 
     // Types have to match
     if (symbol.getType() != unitSymbol.getType()) {
-        error(infoSink, "Types must match:");
-        writeTypeComparison = true;
+        // but, we make an exception if one is an implicit array and the other is sized
+        if (! (symbol.getType().isArray() && unitSymbol.getType().isArray() &&
+                symbol.getType().sameElementType(unitSymbol.getType()) &&
+                (symbol.getType().isUnsizedArray() || unitSymbol.getType().isUnsizedArray()))) {
+            error(infoSink, "Types must match:");
+            writeTypeComparison = true;
+        }
     }
 
     // Qualifiers have to (almost) match
@@ -511,7 +519,9 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         virtual void visitSymbol(TIntermSymbol* symbol)
         {
             // Implicitly size arrays.
-            symbol->getWritableType().adoptImplicitArraySizes();
+            // If an unsized array is left as unsized, it effectively
+            // becomes run-time sized.
+            symbol->getWritableType().adoptImplicitArraySizes(false);
         }
     } finalLinkTraverser;
 
@@ -766,7 +776,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
 
     int size;
     if (qualifier.isUniformOrBuffer()) {
-        if (type.isExplicitlySizedArray())
+        if (type.isSizedArray())
             size = type.getCumulativeArraySize();
         else
             size = 1;
@@ -837,8 +847,8 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         // combine location and component ranges
         TIoRange range(locationRange, componentRange, type.getBasicType(), qualifier.hasIndex() ? qualifier.layoutIndex : 0);
 
-        // check for collisions, except for vertex inputs on desktop
-        if (! (profile != EEsProfile && language == EShLangVertex && qualifier.isPipeInput()))
+        // check for collisions, except for vertex inputs on desktop targeting OpenGL
+        if (! (profile != EEsProfile && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
             collision = checkLocationRange(set, range, type, typeCollision);
 
         if (collision < 0)
@@ -914,12 +924,12 @@ int TIntermediate::computeTypeLocationSize(const TType& type, EShLanguage stage)
     // consecutive locations..."
     if (type.isArray()) {
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
+        // TODO: are there valid cases of having an unsized array with a location?  If so, running this code too early.
         TType elementType(type, 0);
-        if (type.isImplicitlySizedArray()) {
-            // TODO: are there valid cases of having an implicitly-sized array with a location?  If so, running this code too early.
-            return computeTypeLocationSize(elementType, stage);
-        } else
+        if (type.isSizedArray())
             return type.getOuterArraySize() * computeTypeLocationSize(elementType, stage);
+        else
+            return computeTypeLocationSize(elementType, stage);
     }
 
     // "The locations consumed by block and structure members are determined by applying the rules above
@@ -971,11 +981,12 @@ int TIntermediate::computeTypeUniformLocationSize(const TType& type)
     if (type.isArray()) {
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
         TType elementType(type, 0);
-        if (type.isImplicitlySizedArray()) {
+        if (type.isSizedArray()) {
+            return type.getOuterArraySize() * computeTypeUniformLocationSize(elementType);
+        } else {
             // TODO: are there valid cases of having an implicitly-sized array with a location?  If so, running this code too early.
             return computeTypeUniformLocationSize(elementType);
-        } else
-            return type.getOuterArraySize() * computeTypeUniformLocationSize(elementType);
+        }
     }
 
     // "Each subsequent inner-most member or element gets incremental
@@ -1036,7 +1047,7 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
 
     if (type.isArray()) {
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
-        assert(type.isExplicitlySizedArray());
+        assert(type.isSizedArray());
         TType elementType(type, 0);
         return type.getOuterArraySize() * computeTypeXfbSize(elementType, containsDouble);
     }

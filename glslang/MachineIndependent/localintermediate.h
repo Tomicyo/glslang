@@ -619,6 +619,7 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
+    void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     using TEntryMap = std::unordered_map<TString, EShLanguage>;
     using TEntrySet = std::vector<TString>;
     size_t getNumDeclaredEntryPoints() const { return declaredEntries.size(); }
@@ -661,6 +662,7 @@ protected:
     TIntermSequence& findLinkerObjects() const;
     bool userOutputUsed() const;
     bool isSpecializationOperation(const TIntermOperator&) const;
+    bool isNonuniformPropagating(TOperator) const;
     bool promoteUnary(TIntermUnary&);
     bool promoteBinary(TIntermBinary&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, TSymbolTable&, const TString&);
