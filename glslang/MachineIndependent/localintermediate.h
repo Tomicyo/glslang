@@ -619,7 +619,6 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
-    void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     using TEntryMap = std::unordered_map<TString, EShLanguage>;
     using TEntrySet = std::vector<TString>;
     size_t getNumDeclaredEntryPoints() const { return declaredEntries.size(); }
@@ -630,7 +629,7 @@ public:
     EShLanguage getDeclaredEntries(const TString& name) const { return declaredEntries.at(name); }
     const TEntrySet& getDeclaredEntryNames() const { return declaredEntryNames; }
 
-    void setSourceFile(const char* file) { sourceFile = file; }
+    void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     const std::string& getSourceFile() const { return sourceFile; }
     void addSourceText(const char* text) { sourceText = sourceText + text; }
     const std::string& getSourceText() const { return sourceText; }

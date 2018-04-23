@@ -8,7 +8,6 @@ endif(WIN32)
 
 set(SOURCES
     MachineIndependent/glslang.y
-    MachineIndependent/glslang_tab.cpp
     MachineIndependent/attribute.cpp
     MachineIndependent/Constant.cpp
     MachineIndependent/iomapper.cpp
@@ -53,7 +52,6 @@ set(HEADERS
     Include/ShHandle.h
     Include/Types.h
     MachineIndependent/attribute.h
-    MachineIndependent/glslang_tab.cpp.h
     MachineIndependent/gl_types.h
     MachineIndependent/Initialize.h
     MachineIndependent/iomapper.h
@@ -70,6 +68,11 @@ set(HEADERS
     MachineIndependent/propagateNoContraction.h
     MachineIndependent/preprocessor/PpContext.h
     MachineIndependent/preprocessor/PpTokens.h)
+
+if(ENABLE_GLSL)
+    list(APPEND HEADERS MachineIndependent/glslang_tab.cpp.h)
+    list(APPEND SOURCES MachineIndependent/glslang_tab.cpp)
+endif(ENABLE_GLSL)
 
 # This might be useful for making grammar changes:
 #

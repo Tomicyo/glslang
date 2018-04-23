@@ -263,6 +263,7 @@ protected:
     bool explicitFloatDefault;  // user set the default for float
 };
 
+#ifdef ENABLE_GLSL
 //
 // GLSL-specific parse helper.  Should have GLSL in the name, but that's
 // too big of a change for comparing branches at the moment, and perhaps
@@ -497,6 +498,7 @@ protected:
     //
     TVector<TSymbol*> ioArraySymbolResizeList;
 };
+#endif
 
 } // end namespace glslang
 

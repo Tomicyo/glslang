@@ -28,6 +28,7 @@ option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" ON)
 option(ENABLE_NV_EXTENSIONS "Enables support of Nvidia-specific extensions" ON)
 
 option(ENABLE_HLSL "Enables HLSL input support" ON)
+option(ENABLE_GLSL "Enables HLSL input support" OFF)
 
 option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
 
@@ -50,6 +51,11 @@ endif(ENABLE_NV_EXTENSIONS)
 if(ENABLE_HLSL)
     add_definitions(-DENABLE_HLSL)
 endif(ENABLE_HLSL)
+
+if(ENABLE_GLSL)
+    add_definitions(-DENABLE_GLSL)
+endif(ENABLE_GLSL)
+
 
 if(WIN32)
     set(CMAKE_DEBUG_POSTFIX "d")

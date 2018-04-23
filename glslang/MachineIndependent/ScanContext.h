@@ -48,6 +48,7 @@ class TPpContext;
 class TPpToken;
 class TParserToken;
 
+#ifdef ENABLE_GLSL
 class TScanContext {
 public:
     explicit TScanContext(TParseContextBase& pc) : parseContext(pc), afterType(false), field(false) { }
@@ -84,5 +85,6 @@ protected:
     const char* tokenText;
     int keyword;
 };
+#endif
 
 } // end namespace glslang

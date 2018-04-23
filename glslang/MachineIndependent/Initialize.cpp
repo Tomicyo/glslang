@@ -79,6 +79,7 @@ TBuiltInParseables::~TBuiltInParseables()
 {
 }
 
+#ifdef ENABLE_GLSL
 TBuiltIns::TBuiltIns()
 {
     // Set up textual representations for making all the permutations
@@ -8635,5 +8636,5 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         break;
     }
 }
-
+#endif
 } // end namespace glslang

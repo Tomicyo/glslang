@@ -47,7 +47,9 @@
 #include "SymbolTable.h"
 #include "ParseHelper.h"
 #include "attribute.h"
+#ifdef ENABLE_GLSL
 #include "glslang_tab.cpp.h"
+#endif
 #include "ScanContext.h"
 #include "Scan.h"
 
@@ -55,9 +57,10 @@
 #include "preprocessor/PpContext.h"
 #include "preprocessor/PpTokens.h"
 
+#ifdef ENABLE_GLSL
 // Required to avoid missing prototype warnings for some compilers
 int yylex(YYSTYPE*, glslang::TParseContext&);
-
+#endif
 namespace glslang {
 
 // read past any white space
@@ -275,6 +278,7 @@ bool TInputScanner::scanVersion(int& version, EProfile& profile, bool& notFirstT
     } while (true);
 }
 
+#ifdef ENABLE_GLSL
 // Fill this in when doing glslang-level scanning, to hand back to the parser.
 class TParserToken {
 public:
@@ -285,9 +289,11 @@ protected:
     TParserToken(TParserToken&);
     TParserToken& operator=(TParserToken&);
 };
+#endif
 
 } // end namespace glslang
 
+#ifdef ENABLE_GLSL
 // This is the function the glslang parser (i.e., bison) calls to get its next token
 int yylex(YYSTYPE* glslangTokenDesc, glslang::TParseContext& parseContext)
 {
@@ -295,6 +301,7 @@ int yylex(YYSTYPE* glslangTokenDesc, glslang::TParseContext& parseContext)
 
     return parseContext.getScanContext()->tokenize(parseContext.getPpContext(), token);
 }
+#endif
 
 namespace {
 
@@ -328,6 +335,7 @@ std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
 
 };
 
+#ifdef ENABLE_GLSL
 namespace glslang {
 
 void TScanContext::fillInKeywordMap()
@@ -1692,3 +1700,5 @@ int TScanContext::secondGenerationImage()
 }
 
 } // end namespace glslang
+
+#endif

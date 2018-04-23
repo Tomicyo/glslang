@@ -79,7 +79,9 @@ using namespace glslang;
 TBuiltInParseables* CreateBuiltInParseables(TInfoSink& infoSink, EShSource source)
 {
     switch (source) {
+#ifdef ENABLE_GLSL
     case EShSourceGlsl: return new TBuiltIns();              // GLSL builtIns
+#endif
 #ifdef ENABLE_HLSL
     case EShSourceHlsl: return new TBuiltInParseablesHlsl(); // HLSL intrinsics
 #endif
@@ -98,6 +100,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
                                       bool parsingBuiltIns, std::string sourceEntryPointName = "")
 {
     switch (source) {
+#ifdef ENABLE_GLSL
     case EShSourceGlsl: {
         if (sourceEntryPointName.size() == 0)
             intermediate.setEntryPointName("main");
@@ -105,6 +108,7 @@ TParseContextBase* CreateParseContext(TSymbolTable& symbolTable, TIntermediate& 
         return new TParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
                                  language, infoSink, forwardCompatible, messages, &entryPoint);
     }
+#endif
 #ifdef ENABLE_HLSL
     case EShSourceHlsl:
         return new HlslParseContext(symbolTable, intermediate, parsingBuiltIns, version, profile, spvVersion,
@@ -239,8 +243,10 @@ bool InitializeSymbolTable(const TString& builtIns, int version, EProfile profil
 
     TShader::ForbidIncluder includer;
     TPpContext ppContext(*parseContext, "", includer);
+#ifdef ENABLE_GLSL
     TScanContext scanContext(*parseContext);
     parseContext->setScanContext(&scanContext);
+#endif
     parseContext->setPpContext(&ppContext);
 
     //
@@ -854,11 +860,12 @@ bool ProcessDeferred(
                                                     spvVersion, forwardCompatible, messages, false, sourceEntryPointName));
     TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
+#ifdef ENABLE_GLSL
     // only GLSL (bison triggered, really) needs an externally set scan context
     glslang::TScanContext scanContext(*parseContext);
     if (source == EShSourceGlsl)
         parseContext->setScanContext(&scanContext);
-
+#endif
     parseContext->setPpContext(&ppContext);
     parseContext->setLimits(*resources);
     if (! goodVersion)
@@ -1205,7 +1212,9 @@ int ShInitialize()
     if (PerProcessGPA == nullptr)
         PerProcessGPA = new TPoolAllocator();
 
+#ifdef ENABLE_GLSL
     glslang::TScanContext::fillInKeywordMap();
+#endif
 #ifdef ENABLE_HLSL
     glslang::HlslScanContext::fillInKeywordMap();
 #endif
@@ -1307,7 +1316,9 @@ int __fastcall ShFinalize()
         PerProcessGPA = nullptr;
     }
 
+#ifdef ENABLE_GLSL
     glslang::TScanContext::deleteKeywordMap();
+#endif
 #ifdef ENABLE_HLSL
     glslang::HlslScanContext::deleteKeywordMap();
 #endif

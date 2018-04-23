@@ -44,6 +44,7 @@
 
 #include "preprocessor/PpContext.h"
 
+#ifdef ENABLE_GLSL
 extern int yyparse(glslang::TParseContext*);
 
 namespace glslang {
@@ -6744,3 +6745,5 @@ TIntermNode* TParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* expre
 }
 
 } // end namespace glslang
+
+#endif

@@ -74,6 +74,7 @@ protected:
     TString stageBuiltins[EShLangCount];
 };
 
+#ifdef ENABLE_GLSL
 //
 // This is a GLSL specific derivation of TBuiltInParseables.  To present a stable
 // interface and match other similar code, it is called TBuiltIns, rather
@@ -104,7 +105,7 @@ protected:
     const char* prefixes[EbtNumTypes];
     int dimMap[EsdNumDims];
 };
-
+#endif
 } // end namespace glslang
 
 #endif // _INITIALIZE_INCLUDED_
