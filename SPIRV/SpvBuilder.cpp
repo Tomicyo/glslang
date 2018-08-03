@@ -1570,7 +1570,8 @@ Id Builder::createBuiltinCall(Id resultType, Id builtins, int entryPoint, const 
 
 // Accept all parameters needed to create a texture instruction.
 // Create the correct instruction based on the inputs, and make the call.
-Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather, bool noImplicitLod, const TextureParameters& parameters)
+Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather,
+    bool noImplicitLod, const TextureParameters& parameters)
 {
     static const int maxTextureArgs = 10;
     Id texArgs[maxTextureArgs] = {};
@@ -1623,6 +1624,7 @@ Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, 
         texArgs[numArgs++] = parameters.offset;
     }
     if (parameters.offsets) {
+        addCapability(CapabilityImageGatherExtended);
         mask = (ImageOperandsMask)(mask | ImageOperandsConstOffsetsMask);
         texArgs[numArgs++] = parameters.offsets;
     }
@@ -2029,7 +2031,37 @@ Id Builder::createMatrixConstructor(Decoration precision, const std::vector<Id>&
     Instruction* instr = module.getInstruction(componentTypeId);
     Id bitCount = instr->getIdOperand(0);
 
-    // Will use a two step process
+    // Optimize matrix constructed from a bigger matrix
+    if (isMatrix(sources[0]) && getNumColumns(sources[0]) >= numCols && getNumRows(sources[0]) >= numRows) {
+        // To truncate the matrix to a smaller number of rows/columns, we need to:
+        // 1. For each column, extract the column and truncate it to the required size using shuffle
+        // 2. Assemble the resulting matrix from all columns
+        Id matrix = sources[0];
+        Id columnTypeId = getContainedTypeId(resultTypeId);
+        Id sourceColumnTypeId = getContainedTypeId(getTypeId(matrix));
+
+        std::vector<unsigned> channels;
+        for (int row = 0; row < numRows; ++row)
+            channels.push_back(row);
+
+        std::vector<Id> matrixColumns;
+        for (int col = 0; col < numCols; ++col) {
+            std::vector<unsigned> indexes;
+            indexes.push_back(col);
+            Id colv = createCompositeExtract(matrix, sourceColumnTypeId, indexes);
+            setPrecision(colv, precision);
+
+            if (numRows != getNumRows(matrix)) {
+                matrixColumns.push_back(createRvalueSwizzle(precision, columnTypeId, colv, channels));
+            } else {
+                matrixColumns.push_back(colv);
+            }
+        }
+
+        return setPrecision(createCompositeConstruct(resultTypeId, matrixColumns), precision);
+    }
+
+    // Otherwise, will use a two step process
     // 1. make a compile-time 2D array of values
     // 2. construct a matrix from that array
 
