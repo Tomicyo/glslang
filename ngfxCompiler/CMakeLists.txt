@@ -1,6 +1,0 @@
-if(NOT ENABLE_HLSL)
-	message(STATUS "ngfx compiler won't be built!")
-else()
-	add_subdirectory(Hlslab)
-	#add_subdirectory(Test)
-endif()
