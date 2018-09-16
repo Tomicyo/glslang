@@ -388,6 +388,11 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["varying"] =                 VARYING;
     (*KeywordMap)["buffer"] =                  BUFFER;
     (*KeywordMap)["coherent"] =                COHERENT;
+    (*KeywordMap)["devicecoherent"] =          DEVICECOHERENT;
+    (*KeywordMap)["queuefamilycoherent"] =     QUEUEFAMILYCOHERENT;
+    (*KeywordMap)["workgroupcoherent"] =       WORKGROUPCOHERENT;
+    (*KeywordMap)["subgroupcoherent"] =        SUBGROUPCOHERENT;
+    (*KeywordMap)["nonprivate"] =              NONPRIVATE;
     (*KeywordMap)["restrict"] =                RESTRICT;
     (*KeywordMap)["readonly"] =                READONLY;
     (*KeywordMap)["writeonly"] =               WRITEONLY;
@@ -691,7 +696,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["smooth"] =                  SMOOTH;
     (*KeywordMap)["flat"] =                    FLAT;
 #ifdef AMD_EXTENSIONS
-    (*KeywordMap)["__explicitInterpAMD"] =     __EXPLICITINTERPAMD;
+    (*KeywordMap)["__explicitInterpAMD"] =     EXPLICITINTERPAMD;
 #endif
     (*KeywordMap)["centroid"] =                CENTROID;
     (*KeywordMap)["precise"] =                 PRECISE;
@@ -945,6 +950,11 @@ int TScanContext::tokenizeIdentifier()
         return es30ReservedFromGLSL(420);
 
     case COHERENT:
+    case DEVICECOHERENT:
+    case QUEUEFAMILYCOHERENT:
+    case WORKGROUPCOHERENT:
+    case SUBGROUPCOHERENT:
+    case NONPRIVATE:
     case RESTRICT:
     case READONLY:
     case WRITEONLY:
@@ -1498,7 +1508,7 @@ int TScanContext::tokenizeIdentifier()
         return keyword;
 
 #ifdef AMD_EXTENSIONS
-    case __EXPLICITINTERPAMD:
+    case EXPLICITINTERPAMD:
         if (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
             parseContext.extensionTurnedOn(E_GL_AMD_shader_explicit_vertex_parameter))
             return keyword;
