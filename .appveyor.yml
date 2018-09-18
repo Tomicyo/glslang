@@ -4,7 +4,7 @@
 # build version format
 version: "{build}"
 
-os: Visual Studio 2013
+os: Visual Studio 2017
 
 platform:
   - x64
@@ -30,9 +30,6 @@ matrix:
   fast_finish: true # Show final status immediately if a test fails.
 
 # scripts that run after cloning repository
-install:
-  - git clone https://github.com/google/googletest.git External/googletest
-  - C:/Python27/python.exe update_glslang_sources.py
 
 build:
   parallel: true  # enable MSBuild parallel builds
@@ -40,15 +37,8 @@ build:
 
 build_script:
   - mkdir build && cd build
-  - cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_INSTALL_PREFIX=install ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
   - cmake --build . --config %CONFIGURATION% --target install
-
-test_script:
-  - ctest -C %CONFIGURATION% --output-on-failure
-  - cd ../Test && bash runtests
-  - cd ../build
-
-after_test:
   # For debug build, the generated dll has a postfix "d" in its name.
   - ps: >-
       If ($env:configuration -Match "Debug") {
@@ -58,7 +48,7 @@ after_test:
       }
   - cd install
   # Zip all glslang artifacts for uploading and deploying
-  - 7z a glslang-master-windows-"%PLATFORM%"-"%CONFIGURATION%".zip
+  - 7z a glslang-windows-"%PLATFORM%"-"%CONFIGURATION%".zip
     bin\glslangValidator.exe
     bin\spirv-remap.exe
     include\glslang\*
@@ -69,23 +59,9 @@ after_test:
     lib\OSDependent%SUFFIX%.lib
     lib\SPIRV%SUFFIX%.lib
     lib\SPVRemapper%SUFFIX%.lib
-    lib\SPIRV-Tools%SUFFIX%.lib
-    lib\SPIRV-Tools-opt%SUFFIX%.lib
+    lib\ngfx_glslang%SUFFIX%.lib
+    lib\ngfx_glslang%SUFFIX%.dll
 
 artifacts:
   - path: build\install\*.zip
     name: artifacts-zip
-
-deploy:
-  - provider: GitHub
-    auth_token:
-      secure: YglcSYdl0TylEa59H4K6lylBEDr586NAt2EMgZquSo+iuPrwgZQuJLPCoihSm9y6
-    release: master-tot
-    description: "Continuous build of the latest master branch by Appveyor and Travis CI"
-    artifact: artifacts-zip
-    draft: false
-    prerelease: false
-    force_update: true
-    on:
-      branch: master
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
