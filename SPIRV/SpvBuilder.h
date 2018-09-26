@@ -131,6 +131,11 @@ public:
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
 
+#ifdef NV_EXTENSIONS
+    // accelerationStructureNV type
+    Id makeAccelerationStructureNVType();
+#endif
+
     // For querying about types.
     Id getTypeId(Id resultId) const { return module.getTypeId(resultId); }
     Id getDerefTypeId(Id resultId) const;
@@ -167,7 +172,7 @@ public:
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
     bool isSampledImageType(Id typeId) const { return getTypeClass(typeId) == OpTypeSampledImage; }
-    bool containsType(Id typeId, Op typeOp, int width) const;
+    bool containsType(Id typeId, Op typeOp, unsigned int width) const;
 
     bool isConstantOpCode(Op opcode) const;
     bool isSpecConstantOpCode(Op opcode) const;
@@ -366,6 +371,10 @@ public:
         Id component;
         Id texelOut;
         Id lodClamp;
+#ifdef NV_EXTENSIONS
+        Id granularity;
+        Id coarse;
+#endif
         bool nonprivate;
         bool volatil;
     };
