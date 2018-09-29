@@ -4879,7 +4879,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void barrier();"
             );
 #ifdef NV_EXTENSIONS
-    if ((profile != EEsProfile && version >= 450) || esBarrier) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void barrier();"
             );
@@ -4904,7 +4904,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             );
     }
 #ifdef NV_EXTENSIONS
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void memoryBarrierShared();"
             "void groupMemoryBarrier();"
@@ -5095,7 +5095,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     // Builtins for GL_NV_mesh_shader
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void writePackedPrimitiveIndices4x8NV(uint, uint);"
             "\n");   
@@ -5288,7 +5288,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     //
     //============================================================================
 
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         // per-vertex attributes
         stageBuiltins[EShLangMeshNV].append(
             "out gl_MeshPerVertexNV {"
@@ -5329,16 +5329,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp uvec3 gl_GlobalInvocationID;"
             "in highp uint gl_LocalInvocationIndex;"
 
-            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
-            "in int gl_DrawIDARB;"             // GL_ARB_shader_draw_parameters
-
             "\n");
-
-        if (version >= 460) {
-            stageBuiltins[EShLangMeshNV].append(
-                "in int gl_DrawID;"
-            );
-        }
 
         stageBuiltins[EShLangTaskNV].append(
             "out uint gl_TaskCountNV;"
@@ -5351,15 +5342,28 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp uvec3 gl_GlobalInvocationID;"
             "in highp uint gl_LocalInvocationIndex;"
 
+            "\n");
+    }
+
+    if (profile != EEsProfile && version >= 450) {
+        stageBuiltins[EShLangMeshNV].append(
             "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
             "in int gl_DrawIDARB;"             // GL_ARB_shader_draw_parameters
+            "\n");
 
+        stageBuiltins[EShLangTaskNV].append(
+            "in highp int gl_DeviceIndex;"     // GL_EXT_device_group
+            "in int gl_DrawIDARB;"             // GL_ARB_shader_draw_parameters
             "\n");
 
         if (version >= 460) {
+            stageBuiltins[EShLangMeshNV].append(
+                "in int gl_DrawID;"
+                "\n");
+
             stageBuiltins[EShLangTaskNV].append(
                 "in int gl_DrawID;"
-            );
+                "\n");
         }
     }
 #endif
@@ -7659,7 +7663,7 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
 
 #ifdef NV_EXTENSIONS
     // SPV_NV_mesh_shader
-    if (profile != EEsProfile && version >= 450) {
+    if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         snprintf(builtInConstant, maxSize, "const int gl_MaxMeshOutputVerticesNV = %d;", resources.maxMeshOutputVerticesNV);
         s.append(builtInConstant);
 
@@ -8634,7 +8638,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         } 
         break;
     case EShLangMeshNV:
-        if (profile != EEsProfile && version >= 450) {
+        if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             // Per-vertex builtins
             BuiltInVariable("gl_MeshVerticesNV", "gl_Position",     EbvPosition,     symbolTable);
             BuiltInVariable("gl_MeshVerticesNV", "gl_PointSize",    EbvPointSize,    symbolTable);
@@ -8682,7 +8686,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("barrier",                      1, &E_GL_NV_mesh_shader);
             symbolTable.setFunctionExtensions("memoryBarrierShared",          1, &E_GL_NV_mesh_shader);
             symbolTable.setFunctionExtensions("groupMemoryBarrier",           1, &E_GL_NV_mesh_shader);
+        }
 
+        if (profile != EEsProfile && version >= 450) {
             // GL_EXT_device_group
             symbolTable.setVariableExtensions("gl_DeviceIndex", 1, &E_GL_EXT_device_group);
             BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
@@ -8744,7 +8750,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         break;
 
     case EShLangTaskNV:
-        if (profile != EEsProfile && version >= 450) {
+        if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             symbolTable.setVariableExtensions("gl_TaskCountNV",          1, &E_GL_NV_mesh_shader);
             symbolTable.setVariableExtensions("gl_WorkGroupSize",        1, &E_GL_NV_mesh_shader);
             symbolTable.setVariableExtensions("gl_WorkGroupID",          1, &E_GL_NV_mesh_shader);
@@ -8764,7 +8770,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("barrier",                   1, &E_GL_NV_mesh_shader);
             symbolTable.setFunctionExtensions("memoryBarrierShared",       1, &E_GL_NV_mesh_shader);
             symbolTable.setFunctionExtensions("groupMemoryBarrier",        1, &E_GL_NV_mesh_shader);
+        }
 
+        if (profile != EEsProfile && version >= 450) {
             // GL_EXT_device_group
             symbolTable.setVariableExtensions("gl_DeviceIndex", 1, &E_GL_EXT_device_group);
             BuiltInVariable("gl_DeviceIndex", EbvDeviceIndex, symbolTable);
@@ -9380,12 +9388,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
         break;
     case EShLangMeshNV:
-        if (profile != EEsProfile && version >= 450) {
+        if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             symbolTable.relateToOperator("writePackedPrimitiveIndices4x8NV", EOpWritePackedPrimitiveIndices4x8NV);
         }
         // fall through
     case EShLangTaskNV:
-        if (profile != EEsProfile && version >= 450) {
+        if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             symbolTable.relateToOperator("memoryBarrierShared", EOpMemoryBarrierShared);
             symbolTable.relateToOperator("groupMemoryBarrier", EOpGroupMemoryBarrier);
         }
