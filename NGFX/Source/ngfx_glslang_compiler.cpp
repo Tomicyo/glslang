@@ -2,8 +2,8 @@
 #include "ngfx_shader_compiler_private.h"
 #include "StandAlone/ResourceLimits.h"
 #if ENABLE_SPIRV_CROSS
-#include <spirv_glsl.hpp>
-#include <spirv_msl.hpp>
+#include "External/spirv-cross/spirv_glsl.hpp"
+#include "External/spirv-cross/spirv_msl.hpp"
 #endif
 namespace ngfx {
 using namespace glslang;
@@ -146,7 +146,7 @@ EShLanguage Convert(ShaderStageBit Shader)
     return EShLangCount;
 }
 
-GlslangCompiler::GlslangCompiler(GlslangCompiler::Output O) : m_OutputType(O) {}
+GlslangCompiler::GlslangCompiler() : m_OutputType(CompileOutputType::SPRIV) {}
 
 GlslangCompiler::~GlslangCompiler() {}
 
@@ -156,20 +156,26 @@ public:
     ~GlslangScope() { ShFinalize(); }
 };
 
-Result GlslangCompiler::Compile(const char *Source, const char *File, const char *EntryPoint, ShaderProfile Profile,
-                                ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel, IIncluder *pIncluder,
+void GlslangCompiler::SetDeviceLimits(DeviceLimits const &limits)
+{
+
+}
+
+Result GlslangCompiler::Compile(const char *Source, const char *File, 
+                                CompileOptions const &options,
+                                IIncluder *pIncluder,
                                 const ShaderDefinition *Definitions, ICompilerResult **ppResult)
 {
     if (!ppResult)
         return Result::ParamError;
-    GlslangScope scope;
+    //GlslangScope scope;
     GLSlangIncluder includer(pIncluder);
     EShMessages message = EShMessages(EShMsgVulkanRules | EShMsgSpvRules | EShMsgReadHlsl);
-    EShLanguage language = Convert(ShaderType);
+    EShLanguage language = Convert(options.ShaderType);
     auto shader = std::make_unique<TShader>(language);
     int len = (int)strlen(Source);
     shader->setStringsWithLengthsAndNames(&Source, &len, &File, 1);
-    shader->setEntryPoint(EntryPoint);
+    shader->setEntryPoint(options.EntryPoint);
     //shader->setEnvInput(glslang::EShSourceHlsl);
     std::string defines;
     if (Definitions)
@@ -219,47 +225,35 @@ Result GlslangCompiler::Compile(const char *Source, const char *File, const char
             }
             std::vector<unsigned int> spirv;
             GlslangToSpv(*program->getIntermediate(language), spirv);
-
             switch (m_OutputType)
             {
-            case CO_SPIRV:
+            case CompileOutputType::SPRIV:
             {
                 *ppResult = new GlslCompilerResult(new SpirvBlob(std::move(spirv)));
                 break;
             }
 #if ENABLE_SPIRV_CROSS
-                case CO_GLSL: // SPIRV->GLSL
-                {
-                    auto glsl_compiler = std::make_unique<spirv_cross::CompilerGLSL>(spirv.data(), spirv.size());
-                    spirv_cross::CompilerGLSL::Options options;
-                    options.version = 450;
-                    options.es = false;
-                    options.vertex.fixup_clipspace = false;
-                    glsl_compiler->set_options(options);
-                    *ShaderOutput = new StringBlob(std::move(glsl_compiler->compile()));
-                    break;
-                }
-                case CO_ESSL: // SPIRV->ESSL
-                {
-                    auto glsl_compiler = std::make_unique<spirv_cross::CompilerGLSL>(spirv.data(), spirv.size());
-                    spirv_cross::CompilerGLSL::Options options;
-                    options.version = 310;
-                    options.es = true;
-                    options.vertex.fixup_clipspace = false;
-                    glsl_compiler->set_options(options);
-                    *ShaderOutput = new StringBlob(std::move(glsl_compiler->compile()));
-                    break;
-                }
-                case CO_MSL: // SPIRV->MSL
-                {
-                    auto msl_compiler = std::make_unique<spirv_cross::CompilerMSL>(spirv.data(), spirv.size());
-                    spirv_cross::CompilerMSL::Options options;
-                    msl_compiler->set_options(options);
-                    *ShaderOutput = new StringBlob(std::move(msl_compiler->compile()));
-                    break;
-                }
+            case CompileOutputType::GLSL:
+            {
+                auto glsl_compiler = std::make_unique<spirv_cross::CompilerGLSL>(spirv.data(), spirv.size());
+                spirv_cross::CompilerGLSL::Options options;
+                options.version = 450;
+                options.es = false;
+                options.vertex.fixup_clipspace = false;
+                glsl_compiler->set_options(options);
+                *ppResult = new GlslCompilerResult(new StringBlob(std::move(glsl_compiler->compile())));
+                break;
+            }
+            case CompileOutputType::MetalSL:
+            {
+                auto msl_compiler = std::make_unique<spirv_cross::CompilerMSL>(spirv.data(), spirv.size());
+                spirv_cross::CompilerMSL::Options options;
+                msl_compiler->set_options(options);
+                *ppResult = new GlslCompilerResult(new StringBlob(std::move(msl_compiler->compile())));
+                break;
+            }
 #endif
-                }
+            }
             
             return Result::Ok;
         }
@@ -267,12 +261,12 @@ Result GlslangCompiler::Compile(const char *Source, const char *File, const char
     return Result::Failed;
 }
 
-Result GlslangCompiler::PreProcess(const char *strSource, const char *strFile, const char *strEntryPoint,
-                                   ShaderProfile Profile, ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel,
-                                   IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult)
-{
-    return Result::Failed;
-}
+//Result GlslangCompiler::PreProcess(const char *strSource, const char *strFile, const char *strEntryPoint,
+//                                   ShaderProfile Profile, ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel,
+//                                   IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult)
+//{
+//    return Result::Failed;
+//}
 
 SpirvBlob::SpirvBlob(std::vector<uint32_t> &&InSpirv) : m_Spirv(std::forward<std::vector<uint32_t>>(InSpirv)) {}
 const void *SpirvBlob::GetData() { return m_Spirv.data(); }

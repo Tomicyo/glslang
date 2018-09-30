@@ -4,7 +4,7 @@
 using namespace ngfx;
 
 ngfx::Result ngfxCreateGlslangCompiler(ngfx::IShaderCompiler**ppCompiler) { 
-    *ppCompiler = new GlslangCompiler(GlslangCompiler::CO_SPIRV);
+    *ppCompiler = new GlslangCompiler();
     return Result::Failed; 
 }
 

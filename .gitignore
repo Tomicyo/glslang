@@ -8,3 +8,5 @@ build/
 Test/localResults/
 External/googletest
 External/spirv-tools
+External/spirv-headers
+/.build

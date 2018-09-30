@@ -1,0 +1,51 @@
+solution("Glslang") {
+	cproj("glslang_hlsl") {
+		type = "shared_lib"
+		srcs = [
+			"glslang/GenericCodeGen/**.cpp",
+			"glslang/Include/**.h",
+			"glslang/MachineIndependent/preprocessor/**.h",
+			"glslang/MachineIndependent/preprocessor/**.cpp",
+			"glslang/MachineIndependent/*.h",
+			"glslang/MachineIndependent/*.cpp",
+			"glslang/Public/*.h",
+			"hlsl/*.h",
+			"hlsl/*.cpp",
+			"OGLCompilersDLL/*.h",
+			"OGLCompilersDLL/*.cpp",
+			"SPIRV/*.h",
+			"SPIRV/*.cpp",
+			"StandAlone/ResourceLimits.h",
+			"StandAlone/ResourceLimits.cpp",
+			"NGFX/Source/**.cpp",
+			"NGFX/Source/**.h",
+			"NGFX/Public/**.h"
+		]
+		private = {
+			defines = ["ENABLE_HLSL=1", "NGFX_SHADER_COMPILER_BUILD=1", "NGFX_SHADER_COMPILER_BUILD_SHARED_LIB=1"]
+			inc_dirs = ["OGLCompilersDLL", "NGFX/Public", 
+				"External/spirv-tools/include", 
+				"External/spirv-tools/external/spirv-headers/include", 
+				"External/spirv-tools", 
+				"."]
+		}
+		
+		match($target_os) {
+			"windows" => {
+				srcs += "glslang/OSDependent/Windows/*.cpp"
+			}
+			"mac" | "android" | "ios" | "linux" => {
+				srcs += "glslang/OSDependent/Unix/*.cpp"
+			}
+		}
+
+		srcs = list_files(srcs, [
+			"glslang/MachineIndependent/glslang_tab.cpp.h",
+			"glslang/MachineIndependent/glslang_tab.cpp"
+		])
+
+		on_init = () {
+			git_clone("https://github.com/KhronosGroup/SPIRV-Cross.git", "${build_dir}/External/spirv-cross")
+		}
+	}
+}

@@ -29,6 +29,10 @@ clone_depth: 5
 matrix:
   fast_finish: true # Show final status immediately if a test fails.
 
+install:
+  - git clone https://github.com/KhronosGroup/SPIRV-Tools.git External/spirv-tools
+  - git clone https://github.com/KhronosGroup/SPIRV-Cross.git External/spirv-cross
+  - git clone https://github.com/KhronosGroup/SPIRV-Headers.git External/spirv-tools/external/spirv-headers
 # scripts that run after cloning repository
 
 build:
@@ -48,17 +52,9 @@ build_script:
       }
   - cd install
   # Zip all glslang artifacts for uploading and deploying
-  - 7z a glslang-windows-"%PLATFORM%"-"%CONFIGURATION%".zip
-    bin\glslangValidator.exe
-    bin\spirv-remap.exe
+  - 7z a glslang-"%PLATFORM%"-"%CONFIGURATION%".zip
     include\glslang\*
     include\SPIRV\*
-    lib\glslang%SUFFIX%.lib
-    lib\HLSL%SUFFIX%.lib
-    lib\OGLCompiler%SUFFIX%.lib
-    lib\OSDependent%SUFFIX%.lib
-    lib\SPIRV%SUFFIX%.lib
-    lib\SPVRemapper%SUFFIX%.lib
     lib\ngfx_glslang%SUFFIX%.lib
     lib\ngfx_glslang%SUFFIX%.dll
 

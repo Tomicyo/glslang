@@ -38,8 +38,21 @@ enum class IncludeType : uint8_t {
     System,
 };
 
-enum class ShaderOptimizeLevel : uint8_t {
+enum class CompileOutputType : uint8_t {
+    SPRIV,
+    MetalSL,
+    DXIL,
+    DXBC,
+    GLSL
+};
 
+enum class ShaderOptimizeLevel : uint8_t {
+    None            = 0,
+    StripDebugInfo  = 1,
+    OptimizeSize    = 1 << 1,
+};
+
+struct DeviceLimits {
 };
 
 struct IIncluder : public RefCounted<true> {
@@ -68,20 +81,31 @@ struct ShaderDefinition {
     Nullable const char *Definition;
 };
 
+struct CompileOptions
+{
+    const char *EntryPoint;
+    ShaderProfile Profile;
+    ShaderStageBit ShaderType;
+    ShaderOptimizeLevel OptLevel;
+};
+
 struct IShaderCompiler : public RefCounted<true> {
     virtual ~IShaderCompiler() {}
-    virtual Result Compile(const char *strSource, const char *strFile, const char *strEntryPoint, ShaderProfile Profile,
-                           ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel, IIncluder *pIncluder,
-                           const ShaderDefinition *Definitions, ICompilerResult **pResult) = 0;
 
+    virtual void SetDeviceLimits(DeviceLimits const &limits) {}
+    virtual void SetOutputType(CompileOutputType const &oType) {}
+
+    virtual Result Compile(const char *strSource, const char *strFile, CompileOptions const& options, IIncluder *pIncluder,
+                           const ShaderDefinition *Definitions, ICompilerResult **pResult) = 0;
+/*
     virtual Result PreProcess(const char *strSource, const char *strFile, const char *strEntryPoint,
                               ShaderProfile Profile, ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel,
-                              IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult) = 0;
+                              IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult) = 0;*/
 };
 
 } // namespace ngfx
-extern "C" NGFX_SHADER_COMPILER_API ngfx::Result ngfxCreateGlslangCompiler(ngfx::IShaderCompiler** ppCompiler);
-extern "C" NGFX_SHADER_COMPILER_API ngfx::Result ngfxDestroyGlslangCompiler(ngfx::IShaderCompiler* pCompiler);
+extern "C" NGFX_SHADER_COMPILER_API ngfx::Result ngfxCreateGlslangCompiler(ngfx::IShaderCompiler **ppCompiler);
+extern "C" NGFX_SHADER_COMPILER_API ngfx::Result ngfxDestroyGlslangCompiler(ngfx::IShaderCompiler *pCompiler);
 #endif
 
 #endif

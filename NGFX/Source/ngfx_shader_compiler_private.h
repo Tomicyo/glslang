@@ -7,26 +7,23 @@ namespace ngfx {
 
 class GlslangCompiler : public IShaderCompiler {
 public:
-    enum Output {
-        CO_SPIRV,
-        CO_GLSL,
-        CO_ESSL,
-        CO_MSL, // Metal Source
-    };
 
-    GlslangCompiler(Output O);
+    GlslangCompiler();
     virtual ~GlslangCompiler() override;
 
-    virtual Result Compile(const char *Source, const char *File, const char *EntryPoint, ShaderProfile Profile,
-                           ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel, IIncluder *pIncluder,
-                           const ShaderDefinition *Definitions, ICompilerResult**ppResult) override;
+    virtual void SetDeviceLimits(DeviceLimits const &limits);
+    virtual void SetOutputType(CompileOutputType const &oType) { m_OutputType = oType; }
 
+    virtual Result Compile(const char *Source, const char *File, CompileOptions const &options, IIncluder *pIncluder,
+                           const ShaderDefinition *Definitions, ICompilerResult**ppResult) override;
+/*
     virtual Result PreProcess(const char *strSource, const char *strFile, const char *strEntryPoint,
                               ShaderProfile Profile, ShaderStageBit ShaderType, ShaderOptimizeLevel OptLevel,
-                              IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult) override;
+                              IIncluder *pIncluder, const ShaderDefinition *Definitions, ICompilerResult **pResult) override;*/
 
 private:
-    Output m_OutputType;
+    CompileOutputType m_OutputType;
+    DeviceLimits m_Limits;
 };
 
 } // namespace ngfx
