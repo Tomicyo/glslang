@@ -57,6 +57,7 @@ public:
 
 private:
     void createMatTimesMat();
+    void createDXRIntrins();
 };
 
 } // end namespace glslang

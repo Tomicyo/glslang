@@ -286,6 +286,11 @@ enum EHlslTokenClass {
     EHTokStructuredBuffer,
     EHTokTextureBuffer,
 
+    // Raytracing type
+    EHTokRaytracingAccelerationStructure,
+    //EHTokRayDesc,
+    //EHTokBuiltInTriangleIntersectionAttributes,
+
     // variable, user type, ...
     EHTokIdentifier,
     EHTokClass,

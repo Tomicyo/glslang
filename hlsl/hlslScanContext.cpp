@@ -348,6 +348,12 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["StructuredBuffer"] =        EHTokStructuredBuffer;
     (*KeywordMap)["TextureBuffer"] =           EHTokTextureBuffer;
 
+    // DXR Extension
+    (*KeywordMap)["RaytracingAccelerationStructure"] = EHTokRaytracingAccelerationStructure;
+    //(*KeywordMap)["RayDesc"] =                  EHTokRayDesc;
+    //(*KeywordMap)["BuiltInTriangleIntersectionAttributes"] = EHTokBuiltInTriangleIntersectionAttributes;
+
+
     (*KeywordMap)["class"] =                   EHTokClass;
     (*KeywordMap)["struct"] =                  EHTokStruct;
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
@@ -841,6 +847,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokTextureBuffer:
     case EHTokSubpassInput:
     case EHTokSubpassInputMS:
+    case EHTokRaytracingAccelerationStructure:
         return keyword;
 
     // variable, user type, ...

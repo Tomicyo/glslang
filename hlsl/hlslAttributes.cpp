@@ -62,7 +62,8 @@ namespace glslang {
             return EatNone;
 
         // handle names with no namespace
-
+        if (name == "shader")
+            return EatShader;
         if (name == "allow_uav_condition")
             return EatAllow_uav_condition;
         else if (name == "branch")
@@ -99,18 +100,6 @@ namespace glslang {
             return EatUnroll;
         else if (name == "loop")
             return EatLoop;
-        else if (name == "vertexshader")
-            return EatVertexShader;
-        else if (name == "pixelshader")
-            return EatPixelShader;
-        else if (name == "computeshader")
-            return EatComputeShader;
-        else if (name == "geometryshader")
-            return EatGeometryShader;
-        else if (name == "domainshader")
-            return EatDomainShader;
-        else if (name == "hullshader")
-            return EatHullShader;
         else
             return EatNone;
     }

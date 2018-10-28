@@ -142,6 +142,8 @@ EShLanguage Convert(ShaderStageBit Shader)
         return EShLangTessEvaluation;
     case ShaderStageBit::TessailationControl:
         return EShLangTessControl;
+    case ShaderStageBit::Raygen:
+        return EShLangRayGenNV;
     }
     return EShLangCount;
 }
@@ -168,7 +170,7 @@ Result GlslangCompiler::Compile(const char *Source, const char *File,
 {
     if (!ppResult)
         return Result::ParamError;
-    //GlslangScope scope;
+    GlslangScope scope;
     GLSlangIncluder includer(pIncluder);
     EShMessages message = EShMessages(EShMsgVulkanRules | EShMsgSpvRules | EShMsgReadHlsl);
     EShLanguage language = Convert(options.ShaderType);

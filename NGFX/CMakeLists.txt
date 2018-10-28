@@ -16,3 +16,9 @@ install(TARGETS ngfx_glslang
         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+        
+add_executable(ngfx_glslang_test 
+Source/ngfx_shader_compiler_test.cpp)
+target_include_directories(ngfx_glslang_test PRIVATE Public)
+target_link_libraries(ngfx_glslang_test ngfx_glslang)

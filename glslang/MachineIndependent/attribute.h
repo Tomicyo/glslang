@@ -75,12 +75,7 @@ namespace glslang {
         EatDependencyInfinite,
         EatDependencyLength,
 
-        EatVertexShader,
-        EatPixelShader,
-        EatComputeShader,
-        EatGeometryShader,
-        EatHullShader,
-        EatDomainShader,
+        EatShader,
     };
 
     class TIntermAggregate;

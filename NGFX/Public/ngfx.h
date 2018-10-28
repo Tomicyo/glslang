@@ -1240,6 +1240,7 @@ enum class ShaderStageBit : uint32_t
   Geometry = 8,
   TessailationEval = 16,
   TessailationControl = 32,
+  Raygen = 64
 };// Enum ShaderStageBit
 
 enum class ShaderFormat : uint32_t

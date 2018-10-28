@@ -983,6 +983,28 @@ enum TOperator {
     EOpWaveGetLaneIndex,                 // Will decompose to gl_SubgroupInvocationID.
     EOpWaveActiveCountBits,              // Will decompose to subgroupBallotBitCount(subgroupBallot()).
     EOpWavePrefixCountBits,              // Will decompose to subgroupBallotInclusiveBitCount(subgroupBallot()).
+
+    // DXR Intrinsics
+    EOpDispatchRaysIndex,
+    EOpDispatchRaysDimensions,
+    EOpWorldRayOrigin,
+    EOpWorldRayDirection,
+    EOpRayTMin,
+    EOpRayTCurrent,
+    EOpRayFlags,
+    EOpInstanceIndex,
+    EOpInstanceID,
+    EOpPrimitiveIndex,
+    EOpObjectRayOrigin,
+    EOpObjectRayDirection,
+    EOpObjectToWorld,
+    EOpWorldToObject,
+    EOpHitKind,
+
+    EOpTraceRay,
+    EOpReportHit,
+    EOpIgnoreHit,
+    EOpAcceptHitAndEndSearch
 };
 
 class TIntermTraverser;

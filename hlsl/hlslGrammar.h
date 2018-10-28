@@ -89,6 +89,7 @@ namespace glslang {
         bool acceptSubpassInputType(TType&);
         bool acceptStructBufferType(TType&);
         bool acceptTextureBufferType(TType&);
+        bool acceptRaytracingASType(TType&);
         bool acceptConstantBufferType(TType&);
         bool acceptStruct(TType&, TIntermNode*& nodeList);
         bool acceptStructDeclarationList(TTypeList*&, TIntermNode*& nodeList, TVector<TFunctionDeclarator>&);

@@ -1874,6 +1874,7 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
         }
         case EatBuiltIn:
         case EatLocation:
+        case EatShader:
             // tolerate these because of dual use of entrypoint and type attributes
             break;
         default:

@@ -510,6 +510,31 @@ void TBuiltInParseablesHlsl::createMatTimesMat()
     }
 }
 
+void TBuiltInParseablesHlsl::createDXRIntrins() 
+{ 
+  TString &s = commonBuiltins; 
+  s += R"(
+struct RayDesc {
+  float3 Origin;
+  float TMin;
+  float3 Direction;
+  float TMax;
+};
+struct BuiltInTriangleIntersectionAttributes {
+  float2 barycentrics;
+};
+const uint RAY_FLAG_NONE = 0x00;
+const uint RAY_FLAG_FORCE_OPAQUE = 0x01;
+const uint RAY_FLAG_FORCE_NON_OPAQUE = 0x02;
+const uint RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH = 0x04;
+const uint RAY_FLAG_SKIP_CLOSEST_HIT_SHADER = 0x08;
+const uint RAY_FLAG_CULL_BACK_FACING_TRIANGLES = 0x10;
+const uint RAY_FLAG_CULL_FRONT_FACING_TRIANGLES = 0x20;
+const uint RAY_FLAG_CULL_OPAQUE = 0x40;
+const uint RAY_FLAG_CULL_NON_OPAQUE = 0x80;
+)";
+}
+
 //
 // Add all context-independent built-in functions and variables that are present
 // for the given version and profile.  Share common ones across stages, otherwise
@@ -932,7 +957,29 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "QuadReadAcrossY",                  nullptr, nullptr,   "SV",             "DFUI",           EShLangPSCS,  false},
         { "QuadReadAcrossDiagonal",           nullptr, nullptr,   "SV",             "DFUI",           EShLangPSCS,  false},
         { "QuadReadLaneAt",                   nullptr, nullptr,   "SV,S",           "DFUI,U",         EShLangPSCS,  false},
+        // TODO: FIX template 
+		    {"TraceRay",						              "-",     "-",       "AUUUUU",			    "-",		      EShLangPSCS,  false},
+        // TODO: FIX template 
+        {"ReportHit",						              nullptr, nullptr,   "-",			        "-",		          EShLangPSCS,  false},
 
+        {"IgnoreHit",						              nullptr, nullptr,   "-",			        "-",	            EShLangPSCS,  false},
+        {"AcceptHitAndEndSearch",	            nullptr, nullptr,   "-",			        "-",		          EShLangPSCS,  false},
+
+        {"DispatchRaysIndex",                 "V2",    "U",       "-",              "-",              EShLangPSCS, false},
+        {"DispatchRaysDimensions",            "V2",    "U",       "-",              "-",              EShLangPSCS, false},
+        {"WorldRayOrigin",                    "V3",    "F",       "-",              "-",              EShLangPSCS, false},
+        {"WorldRayDirection",                 "V3",    "F",       "-",              "-",              EShLangPSCS, false},
+        {"RayTMin",                           "F",     "F",       "-",              "-",              EShLangPSCS, false},
+        {"RayTCurrent",                       "F",     "F",       "-",              "-",              EShLangPSCS, false},
+        {"RayFlags",                          "U",     "U",       "-",              "-",              EShLangPSCS, false},
+        {"InstanceIndex",                     "U",     "U",       "-",              "-",              EShLangPSCS, false},
+        {"InstanceID",                        "U",     "U",       "-",              "-",              EShLangPSCS, false},
+        {"PrimitiveIndex",                    "U",     "U",       "-",              "-",              EShLangPSCS, false},
+        {"ObjectRayOrigin",                   "V3",    "F",       "-",              "-",              EShLangPSCS, false},
+        {"ObjectRayDirection",                "V3",    "F",       "-",              "-",              EShLangPSCS, false},
+        {"ObjectToWorld",                     "M34",   "F",       "-",              "-",              EShLangPSCS, false},
+        {"WorldToObject",                     "M34",   "F",       "-",              "-",              EShLangPSCS, false},
+        {"HitKind",                           "U",     "U",       "-",              "-",              EShLangPSCS, false},
         // Methods for subpass input objects
         { "SubpassLoad",                      "V4",    nullptr,   "[",              "FIU",            EShLangPS,    true },
         { "SubpassLoad",                      "V4",    nullptr,   "],S",            "FIU,I",          EShLangPS,    true },
@@ -1054,7 +1101,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
     }
 
     createMatTimesMat(); // handle this case separately, for convenience
-
+    createDXRIntrins();
     // printf("Common:\n%s\n",   getCommonString().c_str());
     // printf("Frag:\n%s\n",     getStageString(EShLangFragment).c_str());
     // printf("Vertex:\n%s\n",   getStageString(EShLangVertex).c_str());
@@ -1301,6 +1348,52 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator("QuadReadAcrossY",                            EOpSubgroupQuadSwapVertical);
     symbolTable.relateToOperator("QuadReadAcrossDiagonal",                     EOpSubgroupQuadSwapDiagonal);
     symbolTable.relateToOperator("QuadReadLaneAt",                             EOpSubgroupQuadBroadcast);
+
+    /*
+	enum RAY_FLAG : uint
+	{
+		RAY_FLAG_NONE                            = 0x00,
+		RAY_FLAG_FORCE_OPAQUE                    = 0x01,
+		RAY_FLAG_FORCE_NON_OPAQUE                = 0x02,
+		RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH = 0x04,
+		RAY_FLAG_SKIP_CLOSEST_HIT_SHADER         = 0x08,
+		RAY_FLAG_CULL_BACK_FACING_TRIANGLES      = 0x10,
+		RAY_FLAG_CULL_FRONT_FACING_TRIANGLES     = 0x20,
+		RAY_FLAG_CULL_OPAQUE                     = 0x40,
+		RAY_FLAG_CULL_NON_OPAQUE                 = 0x80,
+	}; 
+	struct RayDesc
+	{
+		float3 Origin;
+		float  TMin;
+		float3 Direction;
+		float  TMax;
+	};
+	struct BuiltInTriangleIntersectionAttributes
+	{
+		float2 barycentrics;
+	};*/
+    symbolTable.relateToOperator("TraceRay",                                   EOpTraceRay);
+    symbolTable.relateToOperator("ReportHit",                                  EOpReportHit);
+    symbolTable.relateToOperator("IgnoreHit",                                  EOpIgnoreHit);
+    symbolTable.relateToOperator("AcceptHitAndEndSearch",                      EOpAcceptHitAndEndSearch);
+
+    symbolTable.relateToOperator("DispatchRaysIndex",                          EOpDispatchRaysIndex);
+    symbolTable.relateToOperator("DispatchRaysDimensions",                     EOpDispatchRaysDimensions);
+    symbolTable.relateToOperator("WorldRayOrigin",                             EOpWorldRayOrigin);
+    symbolTable.relateToOperator("WorldRayDirection",                          EOpWorldRayDirection);
+    symbolTable.relateToOperator("RayTMin",                                    EOpRayTMin);
+    symbolTable.relateToOperator("RayTCurrent",                                EOpRayTCurrent);
+    symbolTable.relateToOperator("RayFlags",                                   EOpRayFlags);
+    symbolTable.relateToOperator("InstanceIndex",                              EOpInstanceIndex);
+    symbolTable.relateToOperator("InstanceID",                                 EOpInstanceID);
+    symbolTable.relateToOperator("PrimitiveIndex",                             EOpPrimitiveIndex);
+    symbolTable.relateToOperator("ObjectRayOrigin",                            EOpObjectRayOrigin);
+    symbolTable.relateToOperator("ObjectRayDirection",                         EOpObjectRayDirection);
+    symbolTable.relateToOperator("ObjectToWorld",                              EOpObjectToWorld);
+    symbolTable.relateToOperator("WorldToObject",                              EOpWorldToObject);
+    symbolTable.relateToOperator("HitKind",                                    EOpHitKind);
+
 
     // Subpass input methods
     symbolTable.relateToOperator(BUILTIN_PREFIX "SubpassLoad",                 EOpSubpassLoad);
