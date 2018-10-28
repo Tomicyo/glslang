@@ -154,7 +154,10 @@ typedef EShTargetClientVersion EshTargetClientVersion;
 
 typedef enum {
     EShTargetSpv_1_0 = (1 << 16),
+    EShTargetSpv_1_1 = (1 << 16) | (1 << 8),
+    EShTargetSpv_1_2 = (1 << 16) | (2 << 8),
     EShTargetSpv_1_3 = (1 << 16) | (3 << 8),
+    EShTargetSpv_1_4 = (1 << 16) | (4 << 8),
 } EShTargetLanguageVersion;
 
 struct TInputLanguage {
@@ -416,6 +419,8 @@ public:
     void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
     void setAutoMapLocations(bool map);
+    void addUniformLocationOverride(const char* name, int loc);
+    void setUniformLocationBase(int base);
     void setInvertY(bool invert);
     void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
