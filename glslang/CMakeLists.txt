@@ -83,6 +83,8 @@ endif(ENABLE_GLSL)
 #                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 # set(BISON_GLSLParser_OUTPUT_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/MachineIndependent/glslang_tab.cpp)
 
+PCH(SOURCES MachineIndependent/pch.cpp)
+
 add_library(glslang ${LIB_TYPE} ${BISON_GLSLParser_OUTPUT_SOURCE} ${SOURCES} ${HEADERS})
 set_property(TARGET glslang PROPERTY FOLDER glslang)
 set_property(TARGET glslang PROPERTY POSITION_INDEPENDENT_CODE ON)

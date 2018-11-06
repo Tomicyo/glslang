@@ -157,7 +157,7 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
 #ifdef NV_EXTENSIONS
     case EvqHitAttrNV:
         if (language != EShLangIntersectNV)
-            message = "cannot modify hitAttributeNVX in this stage";
+            message = "cannot modify hitAttributeNV in this stage";
         break;
 #endif
 
@@ -177,7 +177,7 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
             break;
 #ifdef NV_EXTENSIONS
         case EbtAccStructNV:
-            message = "can't modify accelerationStructureNVX";
+            message = "can't modify accelerationStructureNV";
             break;
 #endif
         default:
